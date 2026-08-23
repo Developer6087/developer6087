@@ -411,6 +411,22 @@ transform:translateY(-2px);
 background:#45f0bd;
 }
 
+.send-btn:disabled{
+opacity:0.6;
+cursor:not-allowed;
+transform:none;
+}
+
+.error-text{
+font-size:13px;
+color:#f87171;
+display:none;
+}
+
+.error-text.active{
+display:block;
+}
+
 .success-box{
 display:flex;
 flex-direction:column;
@@ -548,7 +564,7 @@ padding:24px;
 <span class="name" id="modalPlanName">Plan</span>
 <span class="price" id="modalPlanPrice">Precio</span>
 </div>
-<form action="https://formsubmit.co/caelustry@gmail.com" method="POST" class="modal-form" onsubmit="handleFormSubmit(event)">
+<form action="https://formsubmit.co/ajax/caelustry@gmail.com" method="POST" class="modal-form" onsubmit="handleFormSubmit(event)" id="requestForm">
 <input type="hidden" name="_subject" id="emailSubject" value="Nueva Solicitud de Plan">
 <input type="hidden" name="Plan Seleccionado" id="hiddenPlanName">
 <input type="hidden" name="Precio / Tipo" id="hiddenPlanPrice">
@@ -560,7 +576,8 @@ padding:24px;
 <label for="userDescription">Descripción de lo que vas a solicitar</label>
 <textarea id="userDescription" name="mensaje" placeholder="Escribe aquí los detalles del proyecto o de tu propuesta..." required></textarea>
 </div>
-<button type="submit" class="send-btn">Enviar Solicitud</button>
+<p class="error-text" id="formError">Hubo un problema al enviar tu solicitud. Intenta de nuevo en unos segundos.</p>
+<button type="submit" class="send-btn" id="submitBtn">Enviar Solicitud</button>
 </form>
 </div>
 </div>
@@ -591,6 +608,7 @@ document.getElementById('modalPlanPrice').innerText = planPrice;
 document.getElementById('hiddenPlanName').value = planName;
 document.getElementById('hiddenPlanPrice').value = planPrice;
 document.getElementById('emailSubject').value = 'Nueva Solicitud: ' + planName + ' - DinzaDV';
+document.getElementById('formError').classList.remove('active');
 
 document.getElementById('requestModal').classList.add('active');
 }
@@ -603,6 +621,12 @@ function handleFormSubmit(event){
 event.preventDefault();
 const form = event.target;
 const formData = new FormData(form);
+const submitBtn = document.getElementById('submitBtn');
+const errorText = document.getElementById('formError');
+
+errorText.classList.remove('active');
+submitBtn.disabled = true;
+submitBtn.innerText = 'Enviando...';
 
 fetch(form.action, {
 method: 'POST',
@@ -611,13 +635,21 @@ headers: {
 'Accept': 'application/json'
 }
 }).then(response => {
+if(!response.ok){
+throw new Error('Respuesta no valida del servidor: ' + response.status);
+}
+return response.json();
+}).then(data => {
+submitBtn.disabled = false;
+submitBtn.innerText = 'Enviar Solicitud';
 closeModal('requestModal');
 form.reset();
 document.getElementById('successModal').classList.add('active');
 }).catch(error => {
-closeModal('requestModal');
-form.reset();
-document.getElementById('successModal').classList.add('active');
+console.error('Error al enviar el formulario:', error);
+submitBtn.disabled = false;
+submitBtn.innerText = 'Enviar Solicitud';
+errorText.classList.add('active');
 });
 }
 </script>
